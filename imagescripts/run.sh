@@ -3,6 +3,7 @@
 # init vars
 DOVECOT_DIR="${DOVECOT_DIR:-${ROOT_DIR}/dovecot}"
 
+DOVECOT_MAIL_STORAGE_LOCATION="${DOVECOT_MAIL_STORAGE_LOCATION:-${ROOT_DIR}/vmail}"
 DOVECOT_MAIL_HOME="${DOVECOT_MAIL_STORAGE_LOCATION}/%d/%n"
 if [[ "${DOVECOT_MAIL_STORAGE_FORMAT}" == "sdbox" ]]; then
     DOVECOT_MAIL_LOCATION="sdbox:~/dbox"
@@ -16,11 +17,10 @@ else
     DOVECOT_MAIL_LOCATION="sdbox:~/dbox"
 fi
 
-
 # generate config
 cat <<EOF > ${DOVECOT_DIR}/dovecot.conf
-base_dir = ${DOVECOT_DIR}
-protocols = lmtp imaps
+log_path=/dev/stdout
+protocols = lmtp imap
 
 mail_home=${DOVECOT_MAIL_HOME}
 mail_location=${DOVECOT_MAIL_LOCATION}
@@ -45,14 +45,8 @@ cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
 
 service lmtp {
    inet_listener lmtp {
-      address = ${DOVECOT_LMTP_LISTEN_ADDR} 127.0.0.1 ::1
+      address = ${DOVECOT_LMTP_LISTEN_ADDR}
       port = ${DOVECOT_LMTP_LISTEN_PORT}
-   }
-
-   unixlistener /var/spool/postfix/private/dovecot-lmtp {
-       # postfix uid=100 gid=101
-       group = 101
-       mode = 0600 user = 100
    }
 }
 EOF
@@ -89,10 +83,10 @@ passdb {
 EOF
     if [[ "${DOVECOT_USERDB_USE_PASSWORD_FILE}" == "true" || "${DOVECOT_USERDB_USE_PASSWORD_FILE}" == "yes" ]]; then
         cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
-usredb {
+userdb {
   driver = passwd-file
   args = ${DOVECOT_DIR}/passwords
-  default_fields = uid=vmail gid=vmail
+  default_fields = uid=nobody gid=nobody
 }
 EOF
     fi
@@ -104,7 +98,7 @@ passdb {
 userdb {
   driver = passwd
   args = blocking=no
-  override_fields = uid=vmail gid=vmail
+  default_fields = uid=nobody gid=nobody
 }
 EOF
 fi
@@ -112,5 +106,6 @@ fi
 rm -rf /etc/dovecot
 ln -s "${DOVECOT_DIR}" /etc/dovecot
 cd "${DOVECOT_DIR}"
+chown nobody:nobody "${DOVECOT_MAIL_STORAGE_LOCATION}"
 
 exec dovecot -F -c "${DOVECOT_DIR}/dovecot.conf"

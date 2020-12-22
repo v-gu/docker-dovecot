@@ -5,14 +5,18 @@ version: '2.4'
 services:
   dovecot:
     image: lisnaz/dovecot:latest
-    init: true
     ports:
-    - "10001:10001/tcp"
-    - "10002:10002/tcp"
+      # lmtp port
+      - "24:24/tcp"
+      # auth port
+      - "11000:11000/tcp"
     volumes:
-    - postsrsd:/srv/postsrsd
+      - dovecot:/srv/dovecot
+      - vmail:/srv/vmail
     environment:
-      SRS_DOMAIN: example.com
+      DOVECOT_PASSWORD_FILE_CONTENTS: |
+        test@example.com:{SHA512-CRYPT}$6$9h3vBFtuxOdvEeZQ$uu6DpKaxZ9KX/IpR3TqGI9YkV/YVUKt9lTOLAlGrJs52rOvV.rvzmq5jtnnot02quvcDW5ii4.lmEEd/yJalm1
 
 volumes:
-  postsrsd: {}
+  dovecot: {}
+  vmail: {}
