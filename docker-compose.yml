@@ -1,0 +1,18 @@
+# User provided contents:
+#   - SRS domain
+version: '2.4'
+
+services:
+  dovecot:
+    image: lisnaz/dovecot:latest
+    init: true
+    ports:
+    - "10001:10001/tcp"
+    - "10002:10002/tcp"
+    volumes:
+    - postsrsd:/srv/postsrsd
+    environment:
+      SRS_DOMAIN: example.com
+
+volumes:
+  postsrsd: {}
