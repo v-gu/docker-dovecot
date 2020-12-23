@@ -38,6 +38,8 @@ protocols = ${DOVECOT_ENABLED_PROTOCOLS}
 
 mail_home=${DOVECOT_MAIL_HOME}
 mail_location=${DOVECOT_MAIL_LOCATION}
+first_valid_uid=0
+first_valid_gid=0
 EOF
 
 if [[ "${DOVECOT_MANDATORY_SSL}" == "true" || "${DOVECOT_MANDATORY_SSL}" == "yes" ]]; then
@@ -143,11 +145,11 @@ namespace inbox {
   # ...
 
   mailbox Trash {
-    auto = create
+    auto = subscribe
     special_use = \Trash
   }
   mailbox Drafts {
-    auto = create
+    auto = subscribe
     special_use = \Drafts
   }
   mailbox Sent {
@@ -155,11 +157,11 @@ namespace inbox {
     special_use = \Sent
   }
   mailbox "Sent Messages" {
-    auto = create
+    auto = subscribe
     special_use = \Sent
   }
   mailbox Spam {
-    auto = create # autocreate Spam, but don't autosubscribe
+    auto = subscribe # autocreate Spam, but don't autosubscribe
     special_use = \Junk
   }
   mailbox virtual/All { # if you have a virtual "All messages" mailbox
@@ -172,6 +174,6 @@ EOF
 rm -rf /etc/dovecot
 ln -s "${DOVECOT_DIR}" /etc/dovecot
 cd "${DOVECOT_DIR}"
-chown nobody:nobody "${DOVECOT_MAIL_STORAGE_LOCATION}"
+chown "${DOVECOT_USERDB_DEFAULT_UID}:${DOVECOT_USERDB_DEFAULT_GID}" "${DOVECOT_MAIL_STORAGE_LOCATION}"
 
 exec dovecot -F -c "${DOVECOT_DIR}/dovecot.conf"
