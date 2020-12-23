@@ -3,6 +3,13 @@
 # init vars
 DOVECOT_DIR="${DOVECOT_DIR:-${ROOT_DIR}/dovecot}"
 
+DOVECOT_ENABLED_PROTOCOLS="${DOVECOT_ENABLED_PROTOCOLS:-lmtp imap pop3}"
+
+DOVECOT_ENABLE_AUTH="${DOVECOT_ENABLE_AUTH:-yes}"
+DOVECOT_AUTH_MECHANISMS="${DOVECOT_AUTH_MECHANISMS:-plain login}"
+DOVECOT_AUTH_VERBOSE="${DOVECOT_AUTH_VERBOSE:-no}"
+DOVECOT_AUTH_DISABLE_PLAINTEXT="${DOVECOT_AUTH_DISABLE_PLAINTEXT:-yes}"
+
 DOVECOT_MAIL_STORAGE_LOCATION="${DOVECOT_MAIL_STORAGE_LOCATION:-${ROOT_DIR}/vmail}"
 DOVECOT_MAIL_HOME="${DOVECOT_MAIL_STORAGE_LOCATION}/%d/%n"
 if [[ "${DOVECOT_MAIL_STORAGE_FORMAT}" == "sdbox" ]]; then
@@ -17,17 +24,41 @@ else
     DOVECOT_MAIL_LOCATION="sdbox:~/dbox"
 fi
 
+DOVECOT_PASSWORD_FILE_SCHEME="${DOVECOT_PASSWORD_FILE_SCHEME:-sha512-crypt}"
+DOVECOT_USERDB_DEFAULT_UID="${DOVECOT_USERDB_DEFAULT_UID:-nobody}"
+DOVECOT_USERDB_DEFAULT_GID="${DOVECOT_USERDB_DEFAULT_GID:-nobody}"
+
+DOVECOT_SSL_CERT_FILE="${DOVECOT_SSL_CERT_FILE:-${ROOT_DIR}/tls/dovecot.crt}"
+DOVECOT_SSL_KEY_FILE="${DOVECOT_SSL_KEY_FILE:-${ROOT_DIR}/tls/dovecot.key}"
+
 # generate config
 cat <<EOF > ${DOVECOT_DIR}/dovecot.conf
 log_path=/dev/stdout
-protocols = lmtp imap
+protocols = ${DOVECOT_ENABLED_PROTOCOLS}
 
 mail_home=${DOVECOT_MAIL_HOME}
 mail_location=${DOVECOT_MAIL_LOCATION}
+EOF
 
-# Disable SSL for now.
+if [[ "${DOVECOT_MANDATORY_SSL}" == "true" || "${DOVECOT_MANDATORY_SSL}" == "yes" ]]; then
+    cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
+
+# SSL
+ssl = required
+disable_plaintext_auth = ${DOVECOT_AUTH_DISABLE_PLAINTEXT}
+ssl_cert = <${DOVECOT_SSL_CERT_FILE}
+ssl_key = <${DOVECOT_SSL_KEY_FILE}
+EOF
+else
+    cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
+
+# SSL
 ssl = no
-disable_plaintext_auth = no
+disable_plaintext_auth = ${DOVECOT_AUTH_DISABLE_PLAINTEXT}
+EOF
+fi
+
+cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
 
 # If you're using POP3, you'll need this:
 pop3_uidl_format = %g
@@ -67,9 +98,9 @@ fi
 cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
 
 # Authentication configuration:
-auth_verbose = yes
+auth_verbose = ${DOVECOT_AUTH_VERBOSE}
 # Outlook and Windows Mail works only with LOGIN mechanism, not the standard PLAIN:
-auth_mechanisms = plain login
+auth_mechanisms = ${DOVECOT_AUTH_MECHANISMS}
 EOF
 
 if [[ -n "${DOVECOT_PASSWORD_FILE_CONTENTS}" ]]; then
@@ -77,7 +108,7 @@ if [[ -n "${DOVECOT_PASSWORD_FILE_CONTENTS}" ]]; then
     cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
 passdb {
   driver = passwd-file
-  args = scheme=sha512-crypt ${DOVECOT_DIR}/passwords
+  args = scheme=${DOVECOT_PASSWORD_FILE_SCHEME} ${DOVECOT_DIR}/passwords
 
 }
 EOF
@@ -86,7 +117,7 @@ EOF
 userdb {
   driver = passwd-file
   args = ${DOVECOT_DIR}/passwords
-  default_fields = uid=nobody gid=nobody
+  default_fields = uid=${DOVECOT_USERDB_DEFAULT_UID} gid=${DOVECOT_USERDB_DEFAULT_GID}
 }
 EOF
     fi
@@ -98,7 +129,7 @@ passdb {
 userdb {
   driver = passwd
   args = blocking=no
-  default_fields = uid=nobody gid=nobody
+  default_fields = uid=${DOVECOT_USERDB_DEFAULT_UID} gid=${DOVECOT_USERDB_DEFAULT_GID}
 }
 EOF
 fi

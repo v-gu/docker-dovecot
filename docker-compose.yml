@@ -6,17 +6,24 @@ services:
   dovecot:
     image: lisnaz/dovecot:latest
     ports:
-      # lmtp port
-      - "24:24/tcp"
-      # auth port
-      - "11000:11000/tcp"
+      - "24:24/tcp"             # lmtp port
+      - "143:143/tcp"           # imap port
+      - "993:993/tcp"           # imaps port
+      - "110:110/tcp"           # pop3 port
+      - "995:995/tcp"           # pop3s port
+      - "11000:11000/tcp"       # auth port
     volumes:
       - dovecot:/srv/dovecot
+      - tls:/srv/tls
       - vmail:/srv/vmail
     environment:
       DOVECOT_PASSWORD_FILE_CONTENTS: |
         test@example.com:{SHA512-CRYPT}$6$9h3vBFtuxOdvEeZQ$uu6DpKaxZ9KX/IpR3TqGI9YkV/YVUKt9lTOLAlGrJs52rOvV.rvzmq5jtnnot02quvcDW5ii4.lmEEd/yJalm1
+      DOVECOT_MANDATORY_SSL: "yes"
+      DOVECOT_SSL_CERT_FILE: "/srv/tls/mail.example.com.cert"
+      DOVECOT_SSL_KEY_FILE: "/srv/tls/mail.example.com.key"
 
 volumes:
   dovecot: {}
+  tls: {}
   vmail: {}
