@@ -134,6 +134,41 @@ userdb {
 EOF
 fi
 
+# mailbox settings
+cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
+
+namespace inbox {
+  #prefix = INBOX. # the namespace prefix isn't added again to the mailbox names.
+  inbox = yes
+  # ...
+
+  mailbox Trash {
+    auto = create
+    special_use = \Trash
+  }
+  mailbox Drafts {
+    auto = create
+    special_use = \Drafts
+  }
+  mailbox Sent {
+    auto = subscribe # autocreate and autosubscribe the Sent mailbox
+    special_use = \Sent
+  }
+  mailbox "Sent Messages" {
+    auto = create
+    special_use = \Sent
+  }
+  mailbox Spam {
+    auto = create # autocreate Spam, but don't autosubscribe
+    special_use = \Junk
+  }
+  mailbox virtual/All { # if you have a virtual "All messages" mailbox
+    auto = no
+    special_use = \All
+  }
+}
+EOF
+
 rm -rf /etc/dovecot
 ln -s "${DOVECOT_DIR}" /etc/dovecot
 cd "${DOVECOT_DIR}"
