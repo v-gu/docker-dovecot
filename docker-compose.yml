@@ -17,11 +17,10 @@ services:
       - tls:/srv/tls
       - vmail:/srv/vmail
     environment:
+      DOVECOT_DOMAINS: "example.com"
       DOVECOT_PASSWORD_FILE_CONTENTS: |
         test@example.com:{SHA512-CRYPT}$6$9h3vBFtuxOdvEeZQ$uu6DpKaxZ9KX/IpR3TqGI9YkV/YVUKt9lTOLAlGrJs52rOvV.rvzmq5jtnnot02quvcDW5ii4.lmEEd/yJalm1
       DOVECOT_MANDATORY_SSL: "yes"
-      DOVECOT_SSL_CERT_FILE: "/srv/tls/mail.example.com.cert"
-      DOVECOT_SSL_KEY_FILE: "/srv/tls/mail.example.com.key"
 
 volumes:
   dovecot: {}

@@ -10,6 +10,8 @@ MAINTAINER Vincent Gu <v@vgu.io>
 # static since it has volume attached
 ENV DOVECOT_DIR                         "${ROOT_DIR}/dovecot"
 
+ENV DOVECOT_DOMAINS                     "mail.soh.cool"
+
 ENV DOVECOT_LMTP_LISTEN_ADDR            "0.0.0.0"
 ENV DOVECOT_LMTP_LISTEN_PORT            24
 ENV DOVECOT_IMAP_LISTEN_PORT            143

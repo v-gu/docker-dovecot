@@ -3,6 +3,8 @@
 # init vars
 DOVECOT_DIR="${DOVECOT_DIR:-${ROOT_DIR}/dovecot}"
 
+DOVECOT_DOMAINS="${DOVECOT_DOMAINS}"
+
 DOVECOT_ENABLED_PROTOCOLS="${DOVECOT_ENABLED_PROTOCOLS:-lmtp imap pop3}"
 
 DOVECOT_ENABLE_AUTH="${DOVECOT_ENABLE_AUTH:-yes}"
@@ -28,8 +30,7 @@ DOVECOT_PASSWORD_FILE_SCHEME="${DOVECOT_PASSWORD_FILE_SCHEME:-sha512-crypt}"
 DOVECOT_USERDB_DEFAULT_UID="${DOVECOT_USERDB_DEFAULT_UID:-nobody}"
 DOVECOT_USERDB_DEFAULT_GID="${DOVECOT_USERDB_DEFAULT_GID:-nobody}"
 
-DOVECOT_SSL_CERT_FILE="${DOVECOT_SSL_CERT_FILE:-${ROOT_DIR}/tls/dovecot.crt}"
-DOVECOT_SSL_KEY_FILE="${DOVECOT_SSL_KEY_FILE:-${ROOT_DIR}/tls/dovecot.key}"
+DOVECOT_SSL_DIR="${DOVECOT_SSL_DIR:-${ROOT_DIR}/tls}"
 
 # generate config
 cat <<EOF > ${DOVECOT_DIR}/dovecot.conf
@@ -48,9 +49,26 @@ if [[ "${DOVECOT_MANDATORY_SSL}" == "true" || "${DOVECOT_MANDATORY_SSL}" == "yes
 # SSL
 ssl = required
 disable_plaintext_auth = ${DOVECOT_AUTH_DISABLE_PLAINTEXT}
-ssl_cert = <${DOVECOT_SSL_CERT_FILE}
-ssl_key = <${DOVECOT_SSL_KEY_FILE}
 EOF
+
+    default_ssl_assigned=false
+    IFS=' ' read -ra domains <<< "${DOVECOT_DOMAINS}"
+    for i in "${domains[@]}"; do
+        if [ "${default_ssl_assigned}" == false ]; then
+            cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
+ssl_cert = <${DOVECOT_SSL_DIR}/${i}/${i}.crt
+ssl_key = <${DOVECOT_SSL_DIR}/${i}/${i}.key
+EOF
+            default_ssl_assigned=true
+        fi
+
+        cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
+local_name ${i} {
+  ssl_cert = <${DOVECOT_SSL_DIR}/${i}/${i}.crt
+  ssl_key = <${DOVECOT_SSL_DIR}/${i}/${i}.key
+}
+EOF
+    done
 else
     cat <<EOF >> ${DOVECOT_DIR}/dovecot.conf
 
