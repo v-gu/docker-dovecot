@@ -12,6 +12,7 @@ ENV DOVECOT_DIR                         "${ROOT_DIR}/dovecot"
 
 ENV DOVECOT_DOMAINS                     "mail.domain"
 
+ENV DOVECOT_LISTEN                      "0.0.0.0"
 ENV DOVECOT_LMTP_LISTEN_ADDR            "0.0.0.0"
 ENV DOVECOT_LMTP_LISTEN_PORT            24
 ENV DOVECOT_IMAP_LISTEN_PORT            143
